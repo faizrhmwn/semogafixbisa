@@ -65,6 +65,7 @@ class DashboardSummaryView(APIView):
                         'total_target': 10
                     }
                 },
+                # Menggunakan serializer yang sudah kita update id-nya
                 'recent_activities': LogAktivitasSerializer(LogAktivitas.objects.all()[:5], many=True).data,
                 'topics': KategoriSerializer(Kategori.objects.all(), many=True).data
             })
@@ -94,8 +95,6 @@ class BeritaViewSet(viewsets.ModelViewSet):
     serializer_class = BeritaSerializer
     queryset = Berita.objects.all() 
     pagination_class = BeritaPagination
-    
-    # Tambahan: Biar yang belum login cuma bisa baca (GET)
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -121,6 +120,7 @@ class BeritaViewSet(viewsets.ModelViewSet):
         queryset = Berita.objects.filter(status='published')
         id_kategori = self.request.query_params.get('kategori')
         if id_kategori:
+            # Tetap menggunakan id_kategori sesuai Primary Key baru
             queryset = queryset.filter(kategori__id_kategori=id_kategori)
         return queryset
 
@@ -206,7 +206,6 @@ class LogAktivitasViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LogAktivitasSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    # Tambahan: Cuma admin yang boleh dapat datanya
     def get_queryset(self):
         if self.request.user.role == 'admin':
             return LogAktivitas.objects.all().order_by('-waktu')
@@ -216,8 +215,6 @@ class KategoriViewSet(viewsets.ModelViewSet):
     queryset = Kategori.objects.all()
     serializer_class = KategoriSerializer
     pagination_class = BeritaPagination 
-    
-    # Tambahan: User belum login nggak bisa nambah/hapus kategori
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
@@ -270,7 +267,7 @@ class KomentarViewSet(viewsets.ModelViewSet):
             tipe='komentar',
             judul=f"Komentar Baru: {komentar.berita.judul}",
             pesan=f"{self.request.user.nama_lengkap}: {komentar.isi_komentar[:30]}...",
-            link_id=komentar.berita.id_berita
+            link_id=komentar.berita.id_berita # Sudah sinkron menggunakan id_berita
         )
 
 class ReaksiViewSet(viewsets.ModelViewSet):

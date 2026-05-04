@@ -10,28 +10,39 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'nama_lengkap', 'foto_profil', 'role']
 
+# --- KATEGORI (Versi Detail) ---
 class KategoriSerializer(serializers.ModelSerializer):
+    jumlah_artikel = serializers.SerializerMethodField()
+
     class Meta:
         model = Kategori
-        fields = '__all__'
+        fields = [
+            'id_kategori', 'nama_kategori', 'slug', 
+            'deskripsi', 'icon', 'urutan_tampil', 
+            'tgl_diperbarui', 'jumlah_artikel'
+        ]
 
-# --- KODE BARU: Untuk Ringkasan Aktivitas Admin ---
+    def get_jumlah_artikel(self, obj):
+        return obj.berita_set.count()
+
+# --- LOG AKTIVITAS (Update id -> id_log) ---
 class LogAktivitasSerializer(serializers.ModelSerializer):
     user_detail = UserSerializer(source='user', read_only=True)
     
     class Meta:
         model = LogAktivitas
-        fields = ['id', 'user', 'user_detail', 'aksi', 'icon_type', 'waktu']
+        fields = ['id_log', 'user', 'user_detail', 'aksi', 'icon_type', 'waktu']
 
 class NewsletterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Newsletter
         fields = ['id', 'email', 'tgl_daftar']
 
+# --- REAKSI (Update id -> id_reaksi) ---
 class ReaksiSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reaksi
-        fields = ['id', 'user', 'berita', 'tipe_reaksi']
+        fields = ['id_reaksi', 'user', 'berita', 'tipe_reaksi']
 
 class KomentarSerializer(serializers.ModelSerializer):
     user_detail = UserSerializer(source='user', read_only=True)
@@ -43,7 +54,7 @@ class KomentarSerializer(serializers.ModelSerializer):
 class NotifikasiSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notifikasi
-        fields = '__all__'
+        fields = ['id_notifikasi', 'user', 'tipe', 'judul', 'pesan', 'is_read', 'tgl_notifikasi', 'link_id']
 
 class BeritaSerializer(serializers.ModelSerializer):
     penulis_detail = UserSerializer(source='penulis', read_only=True)
@@ -59,7 +70,7 @@ class BeritaSerializer(serializers.ModelSerializer):
             'share_count', 'read_time', 'is_featured', 
             'penulis', 'kategori', 'penulis_detail', 
             'kategori_detail', 'komentar', 'reaksi_summary',
-            'feedback_admin' # <--- PENTING: Untuk menampilkan alasan penolakan
+            'feedback_admin'
         ]
         read_only_fields = ['view_count', 'share_count']
 
@@ -68,12 +79,13 @@ class BeritaSerializer(serializers.ModelSerializer):
         counts = obj.reaksi_list.values('tipe_reaksi').annotate(total=Count('tipe_reaksi'))
         return {item['tipe_reaksi']: item['total'] for item in counts}
 
+# --- BOOKMARK (Update id -> id_bookmark) ---
 class BookmarkSerializer(serializers.ModelSerializer):
     berita_detail = BeritaSerializer(source='berita', read_only=True)
 
     class Meta:
         model = Bookmark
-        fields = ['id', 'user', 'berita', 'berita_detail', 'tgl_simpan', 'is_archived']
+        fields = ['id_bookmark', 'user', 'berita', 'berita_detail', 'tgl_simpan', 'is_archived']
         read_only_fields = ['user']
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -99,18 +111,3 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=make_password(validated_data['password'])
         )
         return user
-
-class KategoriSerializer(serializers.ModelSerializer):
-    jumlah_artikel = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Kategori
-        fields = [
-            'id_kategori', 'nama_kategori', 'slug', 
-            'deskripsi', 'icon', 'urutan_tampil', 
-            'tgl_diperbarui', 'jumlah_artikel'
-        ]
-
-    def get_jumlah_artikel(self, obj):
-        # Menghitung total berita yang menggunakan kategori ini
-        return obj.berita_set.count()
