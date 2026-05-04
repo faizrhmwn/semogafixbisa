@@ -11,7 +11,8 @@ from .views import (
     NotifikasiViewSet,
     RegisterView,
     LoginView,
-    DashboardSummaryView
+    DashboardSummaryView,
+    LogAktivitasViewSet
 )
 
 # 1. Router otomatis untuk ViewSets (CRUD standar)
@@ -23,6 +24,7 @@ router.register(r'reaksi', ReaksiViewSet)
 router.register(r'newsletter', NewsletterViewSet)
 router.register(r'bookmark', BookmarkViewSet, basename='bookmark')
 router.register(r'notifikasi', NotifikasiViewSet, basename='notifikasi')
+router.register(r'log-aktivitas', LogAktivitasViewSet, basename='log-aktivitas')
 
 # 2. Gabungkan Router dengan URL Custom (Auth & Dashboard)
 urlpatterns = [

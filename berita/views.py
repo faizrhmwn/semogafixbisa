@@ -95,6 +95,9 @@ class BeritaViewSet(viewsets.ModelViewSet):
     queryset = Berita.objects.all() 
     pagination_class = BeritaPagination
     
+    # Tambahan: Biar yang belum login cuma bisa baca (GET)
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_class = BeritaFilter
     ordering_fields = ['tgl_dibuat', 'judul', 'view_count']
@@ -200,14 +203,22 @@ class BeritaViewSet(viewsets.ModelViewSet):
 
 # --- VIEWSETS LAINNYA ---
 class LogAktivitasViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = LogAktivitas.objects.all().order_by('-waktu')
     serializer_class = LogAktivitasSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    # Tambahan: Cuma admin yang boleh dapat datanya
+    def get_queryset(self):
+        if self.request.user.role == 'admin':
+            return LogAktivitas.objects.all().order_by('-waktu')
+        return LogAktivitas.objects.none()
 
 class KategoriViewSet(viewsets.ModelViewSet):
     queryset = Kategori.objects.all()
     serializer_class = KategoriSerializer
     pagination_class = BeritaPagination 
+    
+    # Tambahan: User belum login nggak bisa nambah/hapus kategori
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
         kat = serializer.save()
