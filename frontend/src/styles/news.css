@@ -1,0 +1,331 @@
+/* --- FONTS & ROOT --- */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,ital,wght@6-72,0,400;6-72,0,600;6-72,0,700;6-72,1,400&family=Public+Sans:wght@300;400;600;700;800&display=swap');
+
+:root {
+  --font-heading: 'Newsreader', serif;
+  --font-ui: 'Public Sans', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-ui);
+  background-color: #fcfcfc;
+  color: #333;
+  line-height: 1.6;
+}
+
+.news-page-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* --- CATEGORY BAR (FULL WIDTH) --- */
+.category-nav-wrapper {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 60px; /* Jeda ke artikel */
+  z-index: 100;
+}
+
+.category-nav-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  gap: 25px;
+}
+
+.sections-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 800;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.category-link {
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  color: #666;
+  cursor: pointer;
+  text-transform: uppercase;
+  padding: 5px 0;
+  position: relative;
+}
+
+.category-link.active {
+  color: #1a3a5c;
+}
+
+.category-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -17px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #1a3a5c;
+}
+
+/* --- FEATURED / HEADLINE --- */
+.featured-article {
+  display: flex;
+  gap: 50px;
+  align-items: center;
+  margin-bottom: 80px;
+}
+
+.featured-link-wrapper {
+  display: flex;
+  gap: 50px;
+  text-decoration: none;
+  color: inherit;
+  align-items: center;
+}
+
+.featured-image-wrapper {
+  flex: 1.3;
+}
+
+.headline-img-large {
+  width: 100%;
+  height: 480px;
+  object-fit: cover;
+  border-radius: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.featured-content {
+  flex: 0.7;
+}
+
+.featured-content h1 {
+  font-family: var(--font-heading);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #111;
+  margin: 15px 0;
+}
+
+.category-tag {
+  font-family: var(--font-ui);
+  color: #1a3a5c;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* --- AUTHOR META --- */
+.author-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.author-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.author-name {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 13px;
+  display: block;
+}
+
+.post-date {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #888;
+}
+
+/* --- ARTICLES GRID --- */
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  margin-bottom: 60px;
+}
+
+.article-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-cat {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 800;
+  color: #1a3a5c;
+}
+
+.lihat-semua {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  color: #00aaff;
+  cursor: pointer;
+}
+
+.article-img-standard {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 15px;
+  margin-bottom: 15px;
+}
+
+.article-card-title {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1a1a1a;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+.article-card-desc, .list-desc {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* --- VERTICAL LIST (CATEGORY) --- */
+.category-list-item {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 30px 0;
+}
+
+.list-item-link {
+  display: flex;
+  gap: 30px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.list-image-container {
+  flex: 0 0 320px;
+}
+
+.list-title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  margin: 10px 0;
+}
+
+/* --- PAGINATION --- */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 40px;
+  padding-bottom: 40px;
+}
+
+.page-number {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e0e0e0;
+  background-color: #fff;
+  color: #666;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.page-number.active {
+  background-color: #1a3a5c;
+  color: #fff;
+  border-color: #1a3a5c;
+}
+
+.btn-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border: 1px solid #e0e0e0;
+  background-color: #fff;
+  color: #666;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* RESET SEMUA LINK DI NEWS PAGE */
+.news-page-wrapper a {
+    text-decoration: none !important; /* Hilangkan garis bawah */
+    color: inherit !important;       /* Gunakan warna teks dari parent (bukan biru) */
+}
+
+/* Memastikan saat sudah diklik (visited) warnanya tidak berubah jadi ungu */
+.news-page-wrapper a:visited {
+    color: inherit !important;
+}
+
+/* Styling spesifik untuk Judul Headline agar tetap tegas */
+.featured-content h1 {
+    color: #1a1a1a; /* Atau warna navy sesuai desain kamu */
+    margin: 15px 0;
+    font-size: 2.5rem;
+}
+
+/* Styling spesifik untuk Judul di Grid */
+.article-card-title {
+    color: #1a1a1a;
+    font-size: 1.25rem;
+    margin-top: 15px;
+    transition: color 0.2s ease;
+}
+
+/* Efek hover (Opsional) biar user tau itu bisa diklik */
+.article-card:hover .article-card-title,
+.featured-link-wrapper:hover h1 {
+    color: #D41212; /* Berubah jadi orange pas di-hover */
+}
+
+/* Reset link pada list tampilan kategori */
+.list-item-link {
+    display: flex;
+    gap: 25px;
+    width: 100%;
+}
