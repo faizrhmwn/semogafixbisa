@@ -135,7 +135,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True
-AUTH_USER_MODEL = 'berita.User'
+AUTH_USER_MODEL = 'berita.Account'
 import os
 
 MEDIA_URL = '/media/'
