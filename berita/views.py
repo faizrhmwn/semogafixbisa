@@ -16,7 +16,8 @@ from .models import (
 from .serializers import (
     BeritaSerializer, KategoriSerializer, KomentarSerializer, 
     ReaksiSerializer, NewsletterSerializer, BookmarkSerializer, 
-    NotifikasiSerializer, RegisterSerializer, LogAktivitasSerializer
+    NotifikasiSerializer, RegisterSerializer, LogAktivitasSerializer,
+    MyTokenObtainPairSerializer
 )
 # Pastikan kamu punya file filters.py, kalau belum ada, hapus baris import ini
 # from .filters import BeritaFilter 
@@ -36,6 +37,7 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = MyTokenObtainPairSerializer
 
 # --- DASHBOARD SUMMARY (MODUL 03 & 04) ---
 class DashboardSummaryView(APIView):
@@ -79,15 +81,22 @@ class BeritaViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     search_fields = ['judul', 'ringkasan'] # Sesuai Tabel 3.4
+    filterset_fields = ['status', 'id_kategori']
     ordering = ['-created_at']
 
     def get_queryset(self):
         user = self.request.user
         author_filter = self.request.query_params.get('author')
+        all_filter = self.request.query_params.get('all')
+        
+        if all_filter == 'true' and user.is_authenticated and user.role == 'admin':
+            return Berita.objects.all()
+            
         if author_filter == 'me' and user.is_authenticated:
             if user.role == 'admin':
                 return Berita.objects.filter(id_admin=user.admin_info)
             return Berita.objects.filter(id_user=user.user_info)
+            
         return Berita.objects.filter(status='published')
 
     def perform_create(self, serializer):
@@ -113,6 +122,9 @@ class ReaksiViewSet(viewsets.ModelViewSet):
     queryset = Reaksi.objects.all()
     serializer_class = ReaksiSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(account=self.request.user)
 
 class BookmarkViewSet(viewsets.ModelViewSet):
     serializer_class = BookmarkSerializer

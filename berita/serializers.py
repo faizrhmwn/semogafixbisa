@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Account, AdminProfile, UserProfile, Kategori, Berita, Komentar, Newsletter, Reaksi, Bookmark, Notifikasi, LogAktivitas
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 # Mengambil model Account yang sudah diatur di settings.AUTH_USER_MODEL
 UserAccount = get_user_model()
@@ -46,6 +47,7 @@ class ReaksiSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reaksi
         fields = ['id_reaksi', 'account', 'berita', 'tipe_reaksi']
+        read_only_fields = ['account']
 
 class KomentarSerializer(serializers.ModelSerializer):
     user_detail = AccountSerializer(source='account', read_only=True)
@@ -125,3 +127,25 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=make_password(validated_data['password'])
         )
         return user
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Add custom claims
+        token['username'] = user.username
+        token['email'] = user.email
+        token['role'] = user.role
+        token['nama_lengkap'] = user.nama_lengkap
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Add extra responses
+        data['username'] = self.user.username
+        data['email'] = self.user.email
+        data['role'] = self.user.role
+        data['nama_lengkap'] = self.user.nama_lengkap
+        if self.user.foto_profil:
+            data['foto_profil'] = self.user.foto_profil.url
+        return data
