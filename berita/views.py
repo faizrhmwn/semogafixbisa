@@ -93,9 +93,23 @@ class BeritaViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        # BYPASS UTAMA JALUR DEMO: Langsung return semua tanpa filter status/author
-        # Langkah ini menjamin semua data di database langsung muncul di Frontend
-        return Berita.objects.all()
+        user = self.request.user
+        author_filter = self.request.query_params.get('author')
+        
+        # 1. JALUR UNTUK HALAMAN "MY ARTICLES"
+        if author_filter == 'me' and user.is_authenticated:
+            if user.role == 'admin':
+                return Berita.objects.all()
+            
+            user_profile = getattr(user, 'user_info', None)
+            if user_profile:
+                return Berita.objects.filter(id_user=user_profile)
+            
+            return Berita.objects.filter(id_user__account=user)
+            
+        # 2. JALUR HALAMAN DEPAN / HOME / NEWS (PUBLIK)
+        # Hanya menampilkan berita yang statusnya sudah 'published' (di-acc admin)
+        return Berita.objects.filter(status='published')
     
     def perform_create(self, serializer):
         user = self.request.user
