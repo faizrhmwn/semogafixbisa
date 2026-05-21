@@ -125,7 +125,16 @@ class BeritaViewSet(viewsets.ModelViewSet):
         status_input = self.request.data.get('status', 'draft')
         
         admin_ref = getattr(user, 'admin_info', None) if user.role == 'admin' else None
-        user_ref = getattr(user, 'user_info', None) if user.role == 'user' else None
+        
+        # JALUR OTOMATIS AMAN:
+        user_ref = None
+        if user.role == 'user':
+            user_ref = getattr(user, 'user_info', None)
+            
+            # KUNCINYA DI SINI: Kalau user_info (UserProfile) lu kosong/None, 
+            # kita paksa buatkan/cari otomatis objek UserProfile-nya biar gak NULL!
+            if not user_ref:
+                user_ref, created = UserProfile.objects.get_or_create(account=user)
         
         if user.role != 'admin' and status_input == 'published':
             status_input = 'pending'
@@ -133,6 +142,14 @@ class BeritaViewSet(viewsets.ModelViewSet):
         gambar_input = self.request.data.get('gambar_url', None)
         if not isinstance(gambar_input, str):
             gambar_input = None
+
+        berita = serializer.save(
+            id_admin=admin_ref, 
+            id_user=user_ref,  # Sekarang ini dijamin gak bakal NULL lagi!
+            status=status_input,
+            gambar_url=gambar_input
+        )
+        LogAktivitas.objects.create(user=user, aksi=f"menambahkan artikel '{berita.judul}'")
 
         berita = serializer.save(
             id_admin=admin_ref, 
