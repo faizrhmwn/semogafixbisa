@@ -80,11 +80,19 @@ class BeritaSerializer(serializers.ModelSerializer):
         read_only_fields = ['view_count', 'share_count']
 
     def get_penulis_detail(self, obj):
-        # Mencari nama penulis dari relasi profil yang tersedia 
-        if obj.id_admin:
-            return obj.id_admin.account.nama_lengkap
-        if obj.id_user:
-            return obj.id_user.account.nama_lengkap
+        # Proteksi try-except biar gak meledak Error 500 kalau data profile-nya belum dibuat di DB
+        try:
+            if obj.id_admin and obj.id_admin.account:
+                return obj.id_admin.account.nama_lengkap
+        except Exception:
+            pass
+
+        try:
+            if obj.id_user and obj.id_user.account:
+                return obj.id_user.account.nama_lengkap
+        except Exception:
+            pass
+            
         return "Anonim"
 
     def get_reaksi_summary(self, obj):
