@@ -61,6 +61,9 @@ class NotifikasiSerializer(serializers.ModelSerializer):
         fields = ['id_notifikasi', 'user', 'tipe', 'judul', 'pesan', 'is_read', 'tgl_notifikasi']
 
 class BeritaSerializer(serializers.ModelSerializer):
+    # Diubah ke CharField biar nerima string teks link URL gambar dari frontend, bukan file mentah upload
+    gambar_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
     # Detail penulis bisa dari AdminProfile atau UserProfile 
     penulis_detail = serializers.SerializerMethodField()
     kategori_detail = KategoriSerializer(source='id_kategori', read_only=True)

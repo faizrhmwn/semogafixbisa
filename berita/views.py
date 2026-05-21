@@ -122,7 +122,19 @@ class BeritaViewSet(viewsets.ModelViewSet):
         
         if user.role != 'admin' and status_input == 'published':
             status_input = 'pending'
-        berita = serializer.save(id_admin=admin_ref, id_user=user_ref, status=status_input)
+            
+        # Pengecekan tambahan: Jika front-end mengirimkan object file mentah alih-alih string URL,
+        # kita kosongkan nilainya agar tidak memicu crash OSError Read-only di Vercel.
+        gambar_input = self.request.data.get('gambar_url', None)
+        if not isinstance(gambar_input, str):
+            gambar_input = None
+
+        berita = serializer.save(
+            id_admin=admin_ref, 
+            id_user=user_ref, 
+            status=status_input,
+            gambar_url=gambar_input
+        )
         LogAktivitas.objects.create(user=user, aksi=f"menambahkan artikel '{berita.judul}'")
 
 # --- VIEWSETS INTERAKSI ---
