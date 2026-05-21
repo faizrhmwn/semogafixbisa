@@ -98,17 +98,23 @@ class BeritaViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         author_filter = self.request.query_params.get('author')
+        
+        # JALUR PINTAS DEMO: Kalau dipanggil buat halaman "My Articles"
         if author_filter == 'me' and user.is_authenticated:
             if user.role == 'admin':
-                # FIX ADMIN: Langsung tampilin semua berita di dashboard tanpa filter per ID individu
-                return Berita.objects.all()
+                return Berita.objects.all() # Admin lihat semua berita
             
+            # User biasa lihat semua berita yang dibikin sama dia sendiri (termasuk draft/pending)
             user_profile = getattr(user, 'user_info', None)
             if user_profile:
                 return Berita.objects.filter(id_user=user_profile)
-            return Berita.objects.none()
+            
+            # BACKUP DEMO: Kalau user_info-nya kosong/bug, filter langsung pake akun loginnnya
+            return Berita.objects.filter(id_user__account=user)
+            
+        # Untuk halaman utama / publik (Cuma nampilin yang sudah publish)
         return Berita.objects.filter(status='published')
-
+    
     def perform_create(self, serializer):
         user = self.request.user
         status_input = self.request.data.get('status', 'draft')
