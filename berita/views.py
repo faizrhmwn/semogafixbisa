@@ -17,7 +17,7 @@ from .serializers import (
     BeritaSerializer, KategoriSerializer, KomentarSerializer, 
     ReaksiSerializer, NewsletterSerializer, BookmarkSerializer, 
     NotifikasiSerializer, RegisterSerializer, LogAktivitasSerializer,
-    CustomTokenObtainPairSerializer # <--- Sudah ditambahkan import serializer baru kamu
+    CustomTokenObtainPairSerializer 
 )
 # Pastikan kamu punya file filters.py, kalau belum ada, hapus baris import ini
 # from .filters import BeritaFilter 
@@ -37,7 +37,7 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
-    serializer_class = CustomTokenObtainPairSerializer # <--- Sudah diganti menggunakan serializer custom baru
+    serializer_class = CustomTokenObtainPairSerializer 
 
 # --- DASHBOARD SUMMARY (MODUL 03 & 04) ---
 class DashboardSummaryView(APIView):
@@ -56,15 +56,27 @@ class DashboardSummaryView(APIView):
                 'recent_activities': LogAktivitasSerializer(LogAktivitas.objects.all()[:5], many=True).data
             })
         
-        user_profile = user.user_info
-        my_berita = Berita.objects.filter(id_user=user_profile)
+        # Dialokasikan pengaman getattr agar tidak crash 500 jika profil user_info kosong
+        user_profile = getattr(user, 'user_info', None)
+        if user_profile:
+            my_berita = Berita.objects.filter(id_user=user_profile)
+            total_articles = my_berita.count()
+            total_likes = Reaksi.objects.filter(berita__id_user=user_profile).count()
+            total_comments = Komentar.objects.filter(berita__id_user=user_profile).count()
+            recent_articles = BeritaSerializer(my_berita.order_by('-created_at')[:3], many=True).data
+        else:
+            total_articles = 0
+            total_likes = 0
+            total_comments = 0
+            recent_articles = []
+
         return Response({
             'stats': {
-                'total_articles': my_berita.count(),
-                'total_likes': Reaksi.objects.filter(berita__id_user=user_profile).count(),
-                'total_comments': Komentar.objects.filter(berita__id_user=user_profile).count(),
+                'total_articles': total_articles,
+                'total_likes': total_likes,
+                'total_comments': total_comments,
             },
-            'recent_articles': BeritaSerializer(my_berita.order_by('-created_at')[:3], many=True).data
+            'recent_articles': recent_articles
         })
 
 # --- VIEWSETS KATEGORI (M-04.5) ---
@@ -80,7 +92,7 @@ class BeritaViewSet(viewsets.ModelViewSet):
     pagination_class = BeritaPagination
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['judul', 'ringkasan'] # Sesuai Tabel 3.4
+    search_fields = ['judul', 'ringkasan'] 
     ordering = ['-created_at']
 
     def get_queryset(self):
@@ -88,15 +100,26 @@ class BeritaViewSet(viewsets.ModelViewSet):
         author_filter = self.request.query_params.get('author')
         if author_filter == 'me' and user.is_authenticated:
             if user.role == 'admin':
-                return Berita.objects.filter(id_admin=user.admin_info)
-            return Berita.objects.filter(id_user=user.user_info)
+                # Menggunakan getattr agar tidak memicu error Relasi Kosong (500)
+                admin_profile = getattr(user, 'admin_info', None)
+                if admin_profile:
+                    return Berita.objects.filter(id_admin=admin_profile)
+                return Berita.objects.none()
+            
+            user_profile = getattr(user, 'user_info', None)
+            if user_profile:
+                return Berita.objects.filter(id_user=user_profile)
+            return Berita.objects.none()
         return Berita.objects.filter(status='published')
 
     def perform_create(self, serializer):
         user = self.request.user
         status_input = self.request.data.get('status', 'draft')
-        admin_ref = user.admin_info if user.role == 'admin' else None
-        user_ref = user.user_info if user.role == 'user' else None
+        
+        # Menggunakan getattr untuk mengantisipasi object profile belum di-generate di DB
+        admin_ref = getattr(user, 'admin_info', None) if user.role == 'admin' else None
+        user_ref = getattr(user, 'user_info', None) if user.role == 'user' else None
+        
         if user.role != 'admin' and status_input == 'published':
             status_input = 'pending'
         berita = serializer.save(id_admin=admin_ref, id_user=user_ref, status=status_input)
