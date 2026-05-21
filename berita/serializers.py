@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Account, AdminProfile, UserProfile, Kategori, Berita, Komentar, Newsletter, Reaksi, Bookmark, Notifikasi, LogAktivitas
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 # Mengambil model Account yang sudah diatur di settings.AUTH_USER_MODEL
 UserAccount = get_user_model()
@@ -101,7 +102,7 @@ class BookmarkSerializer(serializers.ModelSerializer):
         read_only_fields = ['account']
 
 class RegisterSerializer(serializers.ModelSerializer):
-    # Mapping full_name ke field nama_lengkap di model Account [cite: 217, 227]
+    # Mapping full_name ke field nama_lengkap di model Account
     full_name = serializers.CharField(source='nama_lengkap') 
     confirm_password = serializers.CharField(write_only=True)
 
@@ -116,7 +117,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        # Membuat user baru pada sistem autentikasi [cite: 245]
+        # Membuat user baru pada sistem autentikasi
         nama_lengkap = validated_data.pop('nama_lengkap')
         user = UserAccount.objects.create(
             username=validated_data['username'],
@@ -125,3 +126,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=make_password(validated_data['password'])
         )
         return user
+
+# --- CUSTOM SERIALIZER LOGIN JWT (BIAR RESPONSES NGIRIM DATA ROLE) ---
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Nyisipin data role ke payload token JWT-nya
+        token['role'] = user.role
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Nambahin response body biar frontend dapet info user & role pas login sukses
+        data['username'] = self.user.username
+        data['email'] = self.user.email
+        data['role'] = self.user.role  # Otomatis ngambil string 'admin' atau 'user' dari database
+        return data

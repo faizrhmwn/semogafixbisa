@@ -16,7 +16,8 @@ from .models import (
 from .serializers import (
     BeritaSerializer, KategoriSerializer, KomentarSerializer, 
     ReaksiSerializer, NewsletterSerializer, BookmarkSerializer, 
-    NotifikasiSerializer, RegisterSerializer, LogAktivitasSerializer
+    NotifikasiSerializer, RegisterSerializer, LogAktivitasSerializer,
+    CustomTokenObtainPairSerializer # <--- Sudah ditambahkan import serializer baru kamu
 )
 # Pastikan kamu punya file filters.py, kalau belum ada, hapus baris import ini
 # from .filters import BeritaFilter 
@@ -36,6 +37,7 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = CustomTokenObtainPairSerializer # <--- Sudah diganti menggunakan serializer custom baru
 
 # --- DASHBOARD SUMMARY (MODUL 03 & 04) ---
 class DashboardSummaryView(APIView):
