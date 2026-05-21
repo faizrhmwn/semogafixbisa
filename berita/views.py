@@ -100,11 +100,8 @@ class BeritaViewSet(viewsets.ModelViewSet):
         author_filter = self.request.query_params.get('author')
         if author_filter == 'me' and user.is_authenticated:
             if user.role == 'admin':
-                # Menggunakan getattr agar tidak memicu error Relasi Kosong (500)
-                admin_profile = getattr(user, 'admin_info', None)
-                if admin_profile:
-                    return Berita.objects.filter(id_admin=admin_profile)
-                return Berita.objects.none()
+                # FIX ADMIN: Langsung tampilin semua berita di dashboard tanpa filter per ID individu
+                return Berita.objects.all()
             
             user_profile = getattr(user, 'user_info', None)
             if user_profile:
