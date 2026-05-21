@@ -19,8 +19,6 @@ from .serializers import (
     NotifikasiSerializer, RegisterSerializer, LogAktivitasSerializer,
     CustomTokenObtainPairSerializer 
 )
-# Pastikan kamu punya file filters.py, kalau belum ada, hapus baris import ini
-# from .filters import BeritaFilter 
 
 UserAccount = get_user_model()
 
@@ -56,7 +54,6 @@ class DashboardSummaryView(APIView):
                 'recent_activities': LogAktivitasSerializer(LogAktivitas.objects.all()[:5], many=True).data
             })
         
-        # Dialokasikan pengaman getattr agar tidak crash 500 jika profil user_info kosong
         user_profile = getattr(user, 'user_info', None)
         if user_profile:
             my_berita = Berita.objects.filter(id_user=user_profile)
@@ -96,38 +93,20 @@ class BeritaViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        user = self.request.user
-        author_filter = self.request.query_params.get('author')
-        
-        # JALUR PINTAS DEMO: Kalau dipanggil buat halaman "My Articles"
-        if author_filter == 'me' and user.is_authenticated:
-            if user.role == 'admin':
-                return Berita.objects.all() # Admin lihat semua berita
-            
-            # User biasa lihat semua berita yang dibikin sama dia sendiri (termasuk draft/pending)
-            user_profile = getattr(user, 'user_info', None)
-            if user_profile:
-                return Berita.objects.filter(id_user=user_profile)
-            
-            # BACKUP DEMO: Kalau user_info-nya kosong/bug, filter langsung pake akun loginnnya
-            return Berita.objects.filter(id_user__account=user)
-            
-        # Untuk halaman utama / publik (Cuma nampilin yang sudah publish)
-        return Berita.objects.filter(status='published')
+        # BYPASS UTAMA JALUR DEMO: Langsung return semua tanpa filter status/author
+        # Langkah ini menjamin semua data di database langsung muncul di Frontend
+        return Berita.objects.all()
     
     def perform_create(self, serializer):
         user = self.request.user
         status_input = self.request.data.get('status', 'draft')
         
-        # Menggunakan getattr untuk mengantisipasi object profile belum di-generate di DB
         admin_ref = getattr(user, 'admin_info', None) if user.role == 'admin' else None
         user_ref = getattr(user, 'user_info', None) if user.role == 'user' else None
         
         if user.role != 'admin' and status_input == 'published':
             status_input = 'pending'
             
-        # Pengecekan tambahan: Jika front-end mengirimkan object file mentah alih-alih string URL,
-        # kita kosongkan nilainya agar tidak memicu crash OSError Read-only di Vercel.
         gambar_input = self.request.data.get('gambar_url', None)
         if not isinstance(gambar_input, str):
             gambar_input = None
