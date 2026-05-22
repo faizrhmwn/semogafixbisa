@@ -122,7 +122,9 @@ class BeritaViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         user = self.request.user
-        status_input = self.request.data.get('status', 'draft')
+        
+        # BYPASS FRONTEND: Paksa status langsung 'pending' sejak lahir biar ga usah pencet tombol submit yang eror
+        status_input = 'pending'
         
         admin_ref = getattr(user, 'admin_info', None) if user.role == 'admin' else None
         
@@ -131,29 +133,22 @@ class BeritaViewSet(viewsets.ModelViewSet):
         if user.role == 'user':
             user_ref = getattr(user, 'user_info', None)
             
-            # KUNCINYA DI SINI: Kalau user_info (UserProfile) lu kosong/None, 
-            # kita paksa buatkan/cari otomatis objek UserProfile-nya biar gak NULL!
+            # Kalau user_info (UserProfile) kosong, otomatis dibuatkan di DB biar ga NULL
             if not user_ref:
                 user_ref, created = UserProfile.objects.get_or_create(account=user)
         
-        if user.role != 'admin' and status_input == 'published':
-            status_input = 'pending'
+        # Admin tetep bisa bikin yang langsung published kalau mau
+        if user.role == 'admin':
+            status_input = self.request.data.get('status', 'published')
             
         gambar_input = self.request.data.get('gambar_url', None)
         if not isinstance(gambar_input, str):
             gambar_input = None
 
+        # Selesai fix duplikat kodingan lama (cukup panggil sekali)
         berita = serializer.save(
             id_admin=admin_ref, 
-            id_user=user_ref,  # Sekarang ini dijamin gak bakal NULL lagi!
-            status=status_input,
-            gambar_url=gambar_input
-        )
-        LogAktivitas.objects.create(user=user, aksi=f"menambahkan artikel '{berita.judul}'")
-
-        berita = serializer.save(
-            id_admin=admin_ref, 
-            id_user=user_ref, 
+            id_user=user_ref,
             status=status_input,
             gambar_url=gambar_input
         )
@@ -164,8 +159,6 @@ class BeritaViewSet(viewsets.ModelViewSet):
         status_input = self.request.data.get('status', None)
         
         # JALUR PENGAMAN UPDATE STATUS:
-        # Jika user biasa ngirim status 'published', kita paksa belokkan ke 'pending'
-        # Tapi kalau mereka ngirim 'pending' (pas klik Submit to Admin), kita izinkan!
         if user.role != 'admin' and status_input == 'published':
             status_input = 'pending'
             
