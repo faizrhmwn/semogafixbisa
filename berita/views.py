@@ -159,6 +159,23 @@ class BeritaViewSet(viewsets.ModelViewSet):
         )
         LogAktivitas.objects.create(user=user, aksi=f"menambahkan artikel '{berita.judul}'")
 
+    def perform_update(self, serializer):
+        user = self.request.user
+        status_input = self.request.data.get('status', None)
+        
+        # JALUR PENGAMAN UPDATE STATUS:
+        # Jika user biasa ngirim status 'published', kita paksa belokkan ke 'pending'
+        # Tapi kalau mereka ngirim 'pending' (pas klik Submit to Admin), kita izinkan!
+        if user.role != 'admin' and status_input == 'published':
+            status_input = 'pending'
+            
+        if status_input:
+            berita = serializer.save(status=status_input)
+        else:
+            berita = serializer.save()
+            
+        LogAktivitas.objects.create(user=user, aksi=f"mengubah artikel '{berita.judul}'")
+
 # --- VIEWSETS INTERAKSI ---
 class KomentarViewSet(viewsets.ModelViewSet):
     queryset = Komentar.objects.all()
