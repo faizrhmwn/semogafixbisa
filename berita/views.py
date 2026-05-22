@@ -104,6 +104,8 @@ class BeritaViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         author_filter = self.request.query_params.get('author')
+        status_filter = self.request.query_params.get('status')
+        all_filter = self.request.query_params.get('all')
         
         # 1. JALUR UNTUK HALAMAN "MY ARTICLES"
         if author_filter == 'me' and user.is_authenticated:
@@ -116,7 +118,13 @@ class BeritaViewSet(viewsets.ModelViewSet):
             
             return Berita.objects.filter(id_user__account=user)
             
-        # 2. JALUR HALAMAN DEPAN / HOME / NEWS (PUBLIK)
+        # 2. JALUR HALAMAN APPROVAL ADMIN (?all=true&status=pending)
+        # Menangkap filter status dari admin biar antrean pending mau ditarik datanya
+        if status_filter:
+            if all_filter == 'true' or user.role == 'admin':
+                return Berita.objects.filter(status=status_filter)
+            
+        # 3. JALUR HALAMAN DEPAN / HOME / NEWS (PUBLIK)
         # Hanya menampilkan berita yang statusnya sudah 'published' (di-acc admin)
         return Berita.objects.filter(status='published')
     
@@ -145,7 +153,6 @@ class BeritaViewSet(viewsets.ModelViewSet):
         if not isinstance(gambar_input, str):
             gambar_input = None
 
-        # Selesai fix duplikat kodingan lama (cukup panggil sekali)
         berita = serializer.save(
             id_admin=admin_ref, 
             id_user=user_ref,
